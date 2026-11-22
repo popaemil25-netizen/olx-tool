@@ -1,0 +1,13 @@
+# Date personale / locale: NU se sincronizează între PC-uri
+config.toml
+olx.sqlite3
+olx.sqlite3*
+browser_profile/
+*.log
+__pycache__/
+*.pyc
+
+# Arhive și copii de siguranță
+*.zip
+*.rar
+OLX UNEALTA backup*/

@@ -1,0 +1,271 @@
+# Copiază în config.toml. Tokenul poate fi dat și prin env: TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID
+db_path = "olx.sqlite3"
+# Facebook Marketplace: slug-ul orasului din URL (ex. "bucharest", "cluj"); gol = locatia contului tau
+facebook_location = "brasov"   # centrul căutării; Brașov + 500 km = toată țara
+facebook_radius_km = 500          # max. Facebook; 500 km din Brașov acoperă toată România
+facebook_cities = []               # optional: doar anunturi al caror oras contine aceste nume, ex. ["bucuresti", "bucharest", "sector"]
+
+[telegram]
+bot_token = ""
+chat_id = ""
+
+# Secțiunea [olx]/[poll] e folosită doar de varianta API (blocată de OLX cu 403); căutarea la cerere nu o folosește.
+[olx]
+base_url = "https://www.olx.ro/api/v1/offers/"
+
+[poll]
+interval_seconds = 90
+jitter_seconds = 20
+page_size = 40
+max_pages = 2
+
+# Fiecare [[markets]] = o piață cu mediane separate. min_price/max_price devin și filtru de preț în căutarea OLX.
+# Opțiuni comune per piață: ref_percentile (implicit 35 = „preț realist” din istoric, 50 = mediană), min_profit (implicit 150 RON),
+# exclude_shops (implicit true = anunțurile de magazin/amanet/garanție nu intră în istoric).
+# Prețurile de mai jos sunt ESTIMĂRI de pornire, ajustează-le după ce vezi anunțuri reale.
+
+[[markets]]
+name = "telefoane"
+require_storage = true
+queries = ["iphone 12", "iphone 13", "iphone 14", "iphone 15", "iphone 16",
+           "iphone 13 pro", "iphone 14 pro", "iphone 15 pro", "iphone 14 pro max", "iphone 15 pro max",
+           "samsung galaxy", "xiaomi", "redmi"]
+threshold_pct = 25
+min_samples = 8
+min_price = 150
+max_price = 8000
+
+[[markets]]
+name = "console"
+queries = ["playstation 5", "ps5", "playstation 4 pro", "xbox series x", "xbox series s", "nintendo switch"]
+min_price = 400
+max_price = 3000
+exclude_words = ["modat", "modata", "maneta", "manete", "controller", "controler", "dualsense", "volan",
+                 "suport", "portal", "vr", "joc", "psp", "ps3", "ps2", "gta", "fifa", "pokemon", "scart", "memori", "cartela", "card", "ssd"]
+model_patterns = ['(ps\s?[45](?:\s?(?:pro|slim|digital))*)',
+                  '(xbox\s?series\s?[xs]|xbox\s?one\s?[xs]?)',
+                  '(switch\s?(?:oled|lite)?)']
+
+[[markets]]
+name = "macbook"
+on_demand = true      # scos din cauta.bat; rulează doar cu --piata macbook
+queries = ["macbook air", "macbook pro", "macbook m1", "macbook m2"]
+min_price = 1500
+max_price = 9000
+model_patterns = ['(macbook\s?(?:air|pro))']
+# cheie = model + (chip M1-M4, altfel anul) + mărime ecran + stocare, ex. „macbook pro 2017 13 256gb”
+key_features = [['\b(m[1-4])\b', '\b(20(?:1[5-9]|2[0-5]))\b'], ['\b(1[3-6])(?:\.\d)?[\s-]?(?:"|”|″|inch|inci|toli)']]
+exclude_words = ["display ecran", "display original", "ecran original", "topcase", "tastatura macbook"]
+
+[[markets]]
+name = "placi-video"
+on_demand = true      # scos din cauta.bat; rulează doar cu --piata placi-video
+queries = ["rtx 3060", "rtx 3070", "rtx 4060", "rtx 4070", "rx 6600"]
+min_price = 500
+max_price = 4000
+exclude_words = ["laptop", "pc", "calculator", "sistem", "desktop", "gaming pc"]
+model_patterns = ['((?:rtx|gtx|rx)\s?\d{3,4}(?:\s?(?:ti|super|xt))?)']
+
+[[markets]]
+name = "tablete"
+on_demand = true      # scos din cauta.bat; rulează doar cu --piata tablete
+require_storage = true
+queries = ["ipad", "ipad air", "ipad pro", "galaxy tab"]
+min_price = 400
+max_price = 5000
+model_patterns = ['(ipad\s?(?:air|pro|mini)?(?:\s?\d{1,2})?)', '(galaxy\s?tab\s?[a-z]?\d{1,2})']
+
+[[markets]]
+name = "drone"
+on_demand = true      # scos din cauta.bat; rulează doar cu --piata drone
+facebook = false      # prea puține rezultate pe Facebook
+queries = ["dji mini", "dji air", "gopro hero"]
+min_price = 500
+max_price = 5000
+model_patterns = ['(dji\s?mavic\s?mini\s?(?:se|[2-4])?(?:\s?pro)?)', '(dji\s?mavic\s?air\s?(?:2s|[23])?)', '(dji\s?mavic\s?(?:[23]|pro)(?:\s?(?:pro|zoom|classic|cine))?)',
+                  '(dji\s?(?:mini|air|mavic)\s?\d?(?:\s?pro)?)', '(gopro\s?hero\s?\d{1,2})']
+
+[[markets]]
+name = "handheld-gaming"
+on_demand = true      # scos din cauta.bat; rulează doar cu --piata handheld-gaming
+facebook = false      # prea puține rezultate pe Facebook
+require_storage = true
+queries = ["steam deck", "rog ally", "legion go"]
+min_price = 1200
+max_price = 4000
+exclude_words = ["dock", "skin", "suport", "geanta", "joc"]
+model_patterns = ['(steam\s?deck(?:\s?oled)?)', '(rog\s?ally(?:\s?x)?)', '(legion\s?go(?:\s?s)?)']
+
+[[markets]]
+name = "vr"
+on_demand = true      # scos din cauta.bat; rulează doar cu --piata vr
+facebook = false      # prea puține rezultate pe Facebook
+require_storage = true
+queries = ["meta quest 2", "meta quest 3", "oculus quest"]
+min_price = 500
+max_price = 2500
+exclude_words = ["curea", "strap", "controller", "controllere", "controler", "controlere", "lentile", "carcasa"]
+model_patterns = ['(quest\s?(?:pro|3s|3|2))', 'quest :: (?:oculus|meta)\s?(pro|3s|3|2)\b']   # „Meta Oculus 3s” == „Quest 3s”
+
+[[markets]]
+name = "procesoare"
+on_demand = true      # scos din cauta.bat; rulează doar cu --piata procesoare
+facebook = false      # prea puține rezultate pe Facebook
+use_storage = false
+queries = ["ryzen 5 5600", "ryzen 7 5800x3d", "ryzen 7 7800x3d", "i5 12600k", "i7 12700k", "i7 13700k"]
+min_price = 250
+max_price = 2800
+exclude_words = ["laptop", "pc", "calculator", "sistem", "desktop", "kit", "bundle", "cooler", "racire", "memorie", "ram"]
+model_patterns = ['(ryzen)\s?([3579])\s?(\d{4}[a-z0-9]{0,3})', '(i[3579])[\s-]?(\d{4,5}[a-z]{0,2})']
+
+[[markets]]
+name = "aspiratoare-dyson"
+on_demand = true      # scos din cauta.bat; rulează doar cu --piata aspiratoare-dyson
+use_storage = false
+queries = ["dyson v8", "dyson v10", "dyson v11", "dyson v15"]
+min_price = 300
+max_price = 3000
+exclude_words = ["uscator", "airwrap", "airstrait", "filtru", "perie", "motor", "furtun", "mop", "acumulator", "pentru dyson"]
+model_patterns = ['(dyson\s?v\s?\d{1,2}(?:\s?(?:detect|absolute|animal|slim|fluffy|complete))?)']
+
+[[markets]]
+name = "smartwatch"
+on_demand = true      # scos din cauta.bat; rulează doar cu --piata smartwatch
+use_storage = false
+queries = ["apple watch", "garmin fenix", "garmin forerunner"]
+min_price = 400
+max_price = 4500
+exclude_words = ["curea", "bratara", "strap", "husa", "clona", "1 la 1", "1:1", "fake", "copie", "replica", "inspirat"]
+model_patterns = ['(apple\s?watch)\s?(?:series\s?|s)?(ultra\s?\d?|se\s?\d?|\d{1,2})\b',
+                  '(garmin\s?(?:fenix|forerunner|venu|vivoactive)\s?\d{1,3}[a-z]?(?:\s?(?:pro|plus|solar))*)']
+key_features = [['\b(\d{2})\s?mm\b']]
+
+# ---------- PERIFERICE ----------
+# Cheie = model recunoscut (fără stocare). Prefixul „brand :: regex” pune brandul în cheie, grupurile din regex completează modelul.
+
+[[markets]]
+name = "mouse"
+on_demand = true      # scos din cauta.bat; rulează doar cu --piata mouse
+use_storage = false
+min_profit = 80
+queries = ["logitech mx master", "logitech mx anywhere", "logitech g502", "logitech g pro superlight",
+           "logitech g305", "razer deathadder", "razer viper", "razer basilisk"]
+min_price = 200
+max_price = 900
+exclude_words = ["mousepad", "pad", "patinute", "skates", "talpi", "grip", "receptor", "receiver", "dongle",
+                 "combo", "bundle", "tastatura", "rotita"]
+model_patterns = ['mx master :: mx\s?master\s?(\d[a-z]?)\b',
+                  'mx anywhere :: mx\s?anywhere\s?(\d[a-z]?)\b',
+                  '(superlight(?:\s?2\b)?)',
+                  'g502 :: g\s?502\s?(x\s?plus|x\s?lightspeed|lightspeed|hero|x)?\b',
+                  'g :: \bg\s?(305|703|903|604|102|203|403)\b',
+                  '(deathadder\s?(?:v[23])?(?:\s?(?:pro|essential|elite))?)',
+                  '(viper\s?(?:v[23])?(?:\s?(?:pro|ultimate|mini))?)',
+                  '(basilisk\s?(?:v[23]|x)?(?:\s?(?:pro|hyperspeed|ultimate))?)']
+
+[[markets]]
+name = "tastaturi"
+on_demand = true      # scos din cauta.bat; rulează doar cu --piata tastaturi
+use_storage = false
+min_profit = 80
+queries = ["logitech mx keys", "logitech g915", "logitech g pro tastatura", "keychron", "razer huntsman",
+           "razer blackwidow", "corsair k70", "steelseries apex"]
+min_price = 120
+max_price = 1500
+exclude_words = ["keycaps", "keycap", "taste", "mousepad", "pad", "combo", "bundle", "mouse", "rest", "palm", "switch", "switches"]
+model_patterns = ['mx keys :: mx\s?keys\s?(mini|s)?\b',
+                  'g :: \bg\s?(613|713|813|815|913|915)(?:\s?(x))?(?:\s?(tkl))?',
+                  'keychron :: keychron\s?([qkv]\d{1,2})(?:\s?(pro|max))?\b',
+                  'razer :: (blackwidow|huntsman|ornata|deathstalker)(?:\s?(v\d))?(?:\s?(mini|tkl|pro|elite|tournament|x))?',
+                  'corsair k :: \bk\s?(70|65|95|100)((?:\s?(?:rgb|pro|max|mini|tkl|air|platinum))*)',
+                  'steelseries apex :: apex\s?(pro|[3579])(?:\s?(tkl|mini))?\b']
+
+[[markets]]
+name = "casti"
+on_demand = true      # scos din cauta.bat; rulează doar cu --piata casti
+use_storage = false
+min_profit = 80
+use_default_exclude = false    # lista implicită respinge „casti”; aici o înlocuim cu una proprie
+queries = ["hyperx cloud", "hyperx cloud alpha", "logitech g pro x", "logitech g733", "steelseries arctis",
+           "razer blackshark", "razer kraken", "corsair hs80"]
+min_price = 80
+max_price = 1200
+exclude_words = ["piese", "pentru piese", "defect", "defecta", "blocat", "schimb", "cumpar", "caut", "vandut", "vandută",
+                 "rezervat", "replica", "copie", "dummy", "atrapa", "perne", "pernute", "burete", "microfon", "cablu",
+                 "suport", "stand", "husa", "carcasa", "baterie", "dongle", "receptor", "adaptor", "capac"]
+model_patterns = ['hyperx cloud 2 :: cloud\s?(?:ii|2)\b\s?(wireless)?',
+                  'hyperx cloud 3 :: cloud\s?(?:iii|3)\b\s?(wireless)?',
+                  'hyperx cloud :: cloud\s?(alpha|stinger|flight|orbit|mix|revolver|core)(?:\s?(s|wireless))?\b',
+                  'logitech g pro x :: g\s?pro\s?x\b(?!\s?superlight)(?:\s?(2))?',
+                  'logitech g :: \bg\s?(733|435|935|335|535|635|930|432)\b',
+                  'razer blackshark :: black\s?shark\s?(v2|v3)?(?:\s?(pro|x|hyperspeed))?\b',
+                  'razer kraken :: kraken\s?(v3|v4|x|ultimate|kitty)?(?:\s?(pro|x|hyperspeed))?\b',
+                  'steelseries arctis :: arctis((?:\s?(?:nova|pro|prime|wireless|x|[1-9]\b))+)',
+                  'corsair :: \b(hs\d{2})((?:\s?(?:pro|wireless|rgb|elite|max))*)',
+                  'corsair virtuoso :: virtuoso((?:\s?(?:rgb|se|xt|wireless|max))*)']
+
+[[markets]]
+name = "monitoare"
+on_demand = true      # scos din cauta.bat; rulează doar cu --piata monitoare
+use_storage = false
+queries = ["monitor gaming 144hz", "monitor 165hz", "monitor 240hz", "monitor 75hz", "monitor 100hz", "monitor 120hz",
+           "monitor 4k", "monitor 27 inch 1440p", "monitor curbat", "monitor ultrawide", "monitor oled",
+           "monitor samsung odyssey", "monitor lg ultragear", "monitor asus tuf", "monitor dell"]
+min_price = 250
+max_price = 3500
+exclude_words = ["suport", "brat", "laptop", "tv", "televizor", "smart", "telefon", "imac", "all in one", "pc", "desktop",
+                 "sistem", "calculator", "set", "2x", "pachet", "bundle", "kit", "dungi", "pixeli morti", "linii"]
+# 1) cod de model concret (cel mai bun) 2) rezervă: brand + diagonală + Hz (amestecă panouri/rezoluții, mediană mai slabă)
+model_patterns = ['samsung odyssey :: odyssey\s?(neo\s?g\d{1,2}|oled\s?g\d{1,2}|g\d{1,2}[a-z]?)\b',
+                  'samsung :: \b(lc\d{2}[a-z]{1,3}\d{2}[a-z]*|c\d{2}[a-z]{1,2}\d{2}[a-z]?|s\d{2}[a-z]{2}\d{3}[a-z]*)\b',
+                  'lg :: \b(\d{2}g[a-z]\d{2,3}[a-z]{0,2}|\d{2}gr\d{2,3}[a-z]{0,2})\b',
+                  'dell :: \b(s\d{4}d[a-z]{1,2}|g\d{4}[a-z]{1,2}|aw\d{4}[a-z]{1,2})\b',
+                  'asus :: \b(vg\d{2,3}[a-z]{1,3}|xg\d{2}[a-z]{1,3}|pg\d{2}[a-z]{1,3}|vp\d{2,3}[a-z]{1,3}|vy\d{2,3}[a-z]{1,3})\b',
+                  'aoc :: \b(c?q?\d{2}g\d[a-z]?\d?)\b',
+                  'gigabyte :: \b(m\d{2}[a-z]{1,2}|g\d{2}[a-z]{1,2}|aorus\s?[a-z]{1,3}\d{2}[a-z]{0,3})\b',
+                  'msi :: \b(g\d{3,4}[a-z]{0,3}|mag\s?\d{3}[a-z]{1,4}|optix\s?[a-z]{1,3}\d{2,3}[a-z]{0,3})\b',
+                  'benq :: \b(xl\d{4}[a-z]?|ex\d{4}[a-z]?|zowie)\b',
+                  'acer :: \b(nitro\s?[a-z]{2,3}\d{3}[a-z]{0,3}|xv\d{3}[a-z]{0,3}|kg\d{3}[a-z]{0,3}|vg\d{3}[a-z]{0,3}|predator\s?[a-z]{1,3}\d{3}[a-z]{0,3})\b',
+                  'monitor :: (?s)^(?=.*?\bmonitor\b)(?=.*?\b(lg|dell|asus|samsung|aoc|gigabyte|msi|benq|acer|philips|viewsonic|lenovo|hp|xiaomi)\b)(?=.*?\b(\d{2})(?:\.\d)?\s?(?:inch|"|”|toli|inci|zoll)(?:\W|$))(?=.*?\b(\d{2,3})\s?hz\b)']
+
+
+# ---------- LA CERERE (nu rulează la cauta.bat; folosește cauta-pc.bat) ----------
+# PC-uri complete: cheia = placa video + procesor + RAM din titlu (ex. „rtx 3060 ryzen 5 5600 16gb”).
+# Anunțurile fără placă video recunoscută sunt respinse („model nerecunoscut”), nu se compară cu alte configurații.
+[[markets]]
+name = "pc-gaming"
+on_demand = true
+use_storage = false
+min_samples = 6
+min_profit = 200
+queries = ["pc gaming", "calculator gaming", "pc gaming rtx 3060", "pc gaming rtx 4060", "pc gaming rtx 3070",
+           "pc gaming rx 6600", "pc gaming ryzen 5 5600", "pc gaming i5 12400f", "sistem gaming rtx"]
+min_price = 1200
+max_price = 8000
+exclude_words = ["laptop", "notebook", "monitor", "imac", "mac", "all in one", "fara placa", "doar placa", "doar carcasa",
+                 "carcasa", "sursa", "cooler", "kit upgrade", "upgrade", "set", "2x", "mini pc", "server", "minecraft"]
+model_patterns = ['((?:rtx|gtx|rx)\s?\d{3,4}(?:\s?(?:ti|super|xt))?)']
+key_features = [['\b(ryzen\s?[3579]\s?\d{4}[a-z0-9]{0,3})\b', '\b(i[3579][\s-]?\d{4,5}[a-z]{0,2})\b'],
+                ['\b(\d{2}\s?gb)(?=\s?(?:ram|ddr))']]
+
+# Laptopuri (la cerere, împreună cu PC-urile). Cheia: gaming = placa video + procesor + RAM + stocare; business = seria modelului.
+# Fără placă video sau serie recunoscută => „model nerecunoscut” (nu se compară cu altceva).
+[[markets]]
+name = "pc-laptopuri"
+on_demand = true
+min_samples = 6
+min_profit = 200
+queries = ["laptop gaming", "laptop rtx 3050", "laptop rtx 3060", "laptop rtx 4050", "laptop rtx 4060", "laptop rtx 4070",
+           "laptop lenovo legion", "laptop asus rog", "laptop asus tuf", "laptop hp omen", "laptop msi",
+           "laptop thinkpad", "laptop dell latitude", "laptop hp elitebook", "laptop dell xps"]
+min_price = 800
+max_price = 9000
+exclude_words = ["macbook", "apple", "chromebook", "tableta", "desktop", "pc", "calculator", "carcasa", "tastatura", "ecran",
+                 "display", "bricked", "pachet", "lot", "2x", "minecraft"]
+model_patterns = ['laptop :: ((?:rtx|gtx)\s?\d{3,4}(?:\s?(?:ti|super))?)',
+                  'thinkpad :: thinkpad\s?([txel]\d{2,3}[a-z]?)\b',
+                  'dell latitude :: latitude\s?(\d{4})\b',
+                  'hp elitebook :: elitebook\s?(\d{3,4}[a-z]?)(?:\s?(g\d{1,2}))?\b',
+                  'dell xps :: xps\s?(\d{2})\b']
+key_features = [['\b(ryzen\s?[3579]\s?\d{4}[a-z0-9]{0,3})\b', '\b(i[3579][\s-]?\d{4,5}[a-z]{0,2})\b'],
+                ['\b(\d{2}\s?gb)(?=\s?(?:ram|ddr))']]
